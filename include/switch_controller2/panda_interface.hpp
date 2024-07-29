@@ -14,6 +14,7 @@
 
 typedef std::function<franka::Torques(const franka::RobotState&, franka::Duration)> TorqueCtrlCallback;
 typedef std::function<franka::JointPositions(const franka::RobotState&, franka::Duration)> PositionCtrlCallback;
+typedef std::function<bool()> GraspingCallback;
 
 #define GRIPPER_MAX_WIDTH 0.08
 #define GRIPPER_EPSILON 0.005
@@ -26,6 +27,7 @@ protected:
   franka::Model model;
   bool _stop_ctrl;
   bool _has_data;
+
   std::mutex m;
   // joint impedance control
   std::array<double, 7> joint_k_array;
@@ -39,18 +41,21 @@ protected:
 public:
   franka::RobotState state;
   franka::Gripper gripper;
+  franka::GripperState gripper_state;
   Spline sp;
   std::array<double, 7> q_d;
   Eigen::Vector3d EE_pos_d;
   Eigen::Quaterniond EE_orn_d;
-  std::string joint_names[7] = {
-    "panda_joint1", 
-    "panda_joint2", 
-    "panda_joint3", 
-    "panda_joint4", 
-    "panda_joint5", 
-    "panda_joint6", 
-    "panda_joint7"
+  std::string joint_names[9] = {
+    "fer_joint1", 
+    "fer_joint2", 
+    "fer_joint3", 
+    "fer_joint4", 
+    "fer_joint5", 
+    "fer_joint6", 
+    "fer_joint7",
+    "fer_finger_joint1",
+    "fer_finger_joint2",
   };
   bool is_trajectory_following;
 
@@ -74,6 +79,7 @@ public:
   void InitializeTrajectoryFollowing(){
     t_traj = 0;
     is_trajectory_following = false;
+    std::cout << "Trajectory following initialized" << std::endl;
   }
 
   Panda(const std::string &ip)
@@ -94,8 +100,8 @@ public:
     joint_k_array.fill(200.0);
     joint_d_array.fill(10.0);
     
-    double k_trans = 220.;
-    double k_rot = 20.;
+    double k_trans = 500.;
+    double k_rot = 50.;
     task_k_matrix.topLeftCorner(3, 3) << k_trans * Eigen::MatrixXd::Identity(3, 3);
     task_d_matrix.topLeftCorner(3, 3) << 2.0 * sqrt(k_trans) *
                                         Eigen::MatrixXd::Identity(3, 3);

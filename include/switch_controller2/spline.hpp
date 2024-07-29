@@ -40,7 +40,7 @@ class Spline
 private:
   int dof = 7;
   std::vector<std::vector< Vector6d >> coeffs; //axis0:time, axis1:joint, axis3:dof - quintic spline
-  std::vector<Waypoint> waypoints;
+  std::vector<std::shared_ptr<Waypoint>> waypoints;
   std::vector<double> timestamps;
 
 public:
@@ -48,7 +48,7 @@ public:
   int last_timestep_index = 0;
 
   Spline(){}
-  void SetWaypoints(const std::vector<Waypoint>& waypoints){
+  void SetWaypoints(const std::vector<std::shared_ptr<Waypoint>>& waypoints){
     this->waypoints = waypoints;
   }
 
@@ -74,11 +74,11 @@ public:
 
   bool CalculateParameters()
   {
-    double first_timestep = waypoints[0].time_from_start;
+    double first_timestep = waypoints[0]->time_from_start;
     //Update C_vector
     int num_waypoints = waypoints.size();
     last_timestep_index = num_waypoints-1;
-    last_timestep = waypoints[last_timestep_index].time_from_start;
+    last_timestep = waypoints[last_timestep_index]->time_from_start;
     if(first_timestep >= last_timestep){
       std::cout << "The last timestep is earlier than the start" << std::endl;
       std::cout << "Start time " << first_timestep << std::endl;
@@ -89,28 +89,28 @@ public:
     timestamps.clear();
 
     //number of spline is (# of way points - 1)
-    std::cout << "num_way_points : " << num_waypoints << std::endl;
+    //std::cout << "num_way_points : " << num_waypoints << std::endl;
     coeffs.resize(num_waypoints - 1);
     
     // k:waypoint index, i:joint index
     for(int k=0; k<(num_waypoints-1); k++)
     {
-      double time_start = waypoints[k].time_from_start;
-      double time_end = waypoints[k+1].time_from_start;
+      double time_start = waypoints[k]->time_from_start;
+      double time_end = waypoints[k+1]->time_from_start;
       double duration = time_end - time_start;
       for(int i=0; i<dof; i++)
       {
         
-        Vector6d coeff = GetParameter(waypoints[k].q[i],   waypoints[k+1].q[i], 
-                          waypoints[k].dq[i],  waypoints[k+1].dq[i], 
-                          waypoints[k].ddq[i], waypoints[k+1].ddq[i], 
+        Vector6d coeff = GetParameter(waypoints[k]->q[i],   waypoints[k+1]->q[i], 
+                          waypoints[k]->dq[i],  waypoints[k+1]->dq[i], 
+                          waypoints[k]->ddq[i], waypoints[k+1]->ddq[i], 
                           0, duration);
         coeffs.at(k).push_back(coeff);
       }
       
       timestamps.push_back(time_start);
     }
-    timestamps.push_back(waypoints[num_waypoints-1].time_from_start);
+    timestamps.push_back(waypoints[num_waypoints-1]->time_from_start);
     
     
     std::cout<<"number of way points : "<< num_waypoints <<std::endl;
@@ -145,8 +145,8 @@ public:
     int timestep_index = GetTimestepIndex(time);
     if(timestep_index == BEYOND_HORIZON)
     {   
-      q_d = waypoints[last_timestep_index].q;
-      dq_d = waypoints[last_timestep_index].dq;
+      q_d = waypoints[last_timestep_index]->q;
+      dq_d = waypoints[last_timestep_index]->dq;
     }
     else
     {   

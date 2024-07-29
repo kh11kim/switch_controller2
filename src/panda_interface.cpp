@@ -34,7 +34,6 @@ void Panda::DoPositionControl(PositionCtrlCallback loop_fn){
   //initialization
   InitializeTrajectoryFollowing();
   UpdateState(panda.readOnce());
-  std::cout << "updatestate" << std::endl;
   //loop
   panda.control(loop_fn);
   
@@ -108,6 +107,7 @@ franka::JointPositions Panda::TrajectoryFollowingCallback(const franka::RobotSta
     if(!is_success){
       q_curr = to_eigen(robot_state.q_d);
     }
+    
     //update
     t_traj += period.toSec();
     if(t_traj >= sp.last_timestep){

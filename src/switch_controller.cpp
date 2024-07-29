@@ -9,6 +9,34 @@ void SwitchController::SetController(int ctrl_mode_cmd){
   EnqueueJob([this](){ this->CtrlJob(); }); 
 }
 
+void SwitchController::SetGraspController(int grasp_mode, double width, double force){
+  if(_gripper_ctrl_mode){
+    std::cout << "Grasping not finished!!" << std::endl;
+    return;
+  }
+  _gripper_ctrl_mode = grasp_mode;
+
+  EnqueueJob([&](){ 
+      switch(grasp_mode){
+        case GRASPMODE_GRASP: // grasp
+          this->grasp_result = Grasp(width, force);
+        break;
+        case GRASPMODE_MOVE: // move
+          this->grasp_result = Move(width);
+        break;
+        case GRASPMODE_AUTOGRASP: // auto-grasp
+          this->grasp_result = AutoGrasp(width);
+        break;
+        case GRASPMODE_HOMING: // homing
+          this->grasp_result = Homing();
+        break;
+      }
+    }
+  ); 
+  _gripper_ctrl_mode = GRASPMODE_IDLE;
+
+}
+
 void SwitchController::CtrlJob(){
   TorqueCtrlCallback torque_ctrl_cb;
   PositionCtrlCallback pos_ctrl_cb;

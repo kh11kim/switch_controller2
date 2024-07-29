@@ -10,8 +10,8 @@ find_package(rclcpp REQUIRED)
 find_package(Boost REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-#find_package(std_msgs REQUIRED)
-find_package(switch_controller2_msg REQUIRED)
+find_package(trajectory_msgs REQUIRED)
+find_package(switch_controller2_interface REQUIRED)
 
 include_directories(
   include
@@ -29,8 +29,16 @@ src/switch_controller.cpp
 src/panda_interface.cpp
 )
 
+set(
+MSG_DEPENDS
+sensor_msgs 
+geometry_msgs 
+trajectory_msgs
+switch_controller2_interface
+)
+
 add_executable(main ${SRC_FILES})
-ament_target_dependencies(main rclcpp sensor_msgs geometry_msgs switch_controller2_msg) # std_msgs
+ament_target_dependencies(main rclcpp ${MSG_DEPENDS}) # std_msgs
 
 
 
